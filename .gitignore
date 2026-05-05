@@ -1,0 +1,6 @@
+# Entorno 
+.clasificador/
+
+# Cache
+__pycache__/
+*.pyc
