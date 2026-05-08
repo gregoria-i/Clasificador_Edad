@@ -4,3 +4,8 @@
 # Cache
 __pycache__/
 *.pyc
+
+# dataset
+FairFace/
+fairface_reorganizado/
+.cache/
