@@ -106,7 +106,8 @@ if __name__=='__main__':
 
     eda_FairFace = EDA(df)
     clases = eda_FairFace.obtener_clases()
-    eda_FairFace.mostrar_distribucion_edades()
+    print("Clases de edad:", clases)
+    """eda_FairFace.mostrar_distribucion_edades()
     eda_FairFace.mostrar_distribucion_genero()
     eda_FairFace.mostrar_distribucion_raza()
     eda_FairFace.reporte_sesgo()
@@ -117,3 +118,4 @@ if __name__=='__main__':
     plt.imshow(img)
     plt.show()
     print(train_df.iloc[n-1])
+  """

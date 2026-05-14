@@ -9,3 +9,8 @@ __pycache__/
 FairFace/
 fairface_reorganizado/
 .cache/
+
+# Carpetas de modelos y resultados
+cnn/
+vit/
+resultados/
