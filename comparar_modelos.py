@@ -85,4 +85,6 @@ if __name__ == "__main__":
     comparador.plot_perdida()
     comparador.plot_presicion()
     comparador.matriz_confusion("vit_tiny_patch16_224.augreg_in21k")
+    comparador.matriz_confusion("deit_tiny_patch16_224.fb_in1k")
+    comparador.matriz_confusion("xcit_tiny_12_p16_224.fb_in1k")
     
