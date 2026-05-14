@@ -11,6 +11,6 @@ fairface_reorganizado/
 .cache/
 
 # Carpetas de modelos y resultados
-cnn/
-vit/
+#cnn/
+#vit/
 resultados/
