@@ -40,9 +40,10 @@ def crear_transform(mean_list = [0.485, 0.456, 0.406], std_list = [0.229, 0.224,
     return transforms.Compose([
 
         transforms.Resize((tam, tam)),
-
+        transforms.RandomHorizontalFlip(0.5),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1, hue=0.05),
         transforms.ToTensor(),
-
+        transforms.RandomResizedCrop(224, scale=(0.90, 1.0)),
         transforms.Normalize(
             mean=mean_list,
             std=std_list
@@ -234,10 +235,10 @@ if __name__ == '__main__':
     num_classes = 9
     batch_size = 32
     lr = 1e-4
-    num_epochs = 10
-    patience = 3
+    num_epochs = 25
+    patience = 5
     warmup_epochs = 2
-    subset_fraction = 0.01  #Para usar solo el 1% del dataset
+    subset_fraction = 0.2  #Para usar solo el 1% del dataset
 
     num_workers = 4
 
