@@ -20,3 +20,6 @@ Obs. Si abres el csv con Excel, los intervalos de edad 03-09 y 10-29 pueden ser 
 ## Comparación de modelos
 python comparar_modelos.py
 Se creó el script comparar_modelos.py para leer archivos json con los resultados de los modelos, de manera que devuelve una tabla resumen, gráfica de pérdidas (comparativa entre modelos y entre conjuntos de entrenamiento y validación), gráfica de precisión (también comparativa), y la matriz de confusión de cada modelo.
+
+
+## mejorar documentacion
