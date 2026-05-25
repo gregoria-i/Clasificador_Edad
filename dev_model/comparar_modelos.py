@@ -11,6 +11,7 @@ import json
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import pandas as pd
+import seaborn as sns
 
 
 class CompararModelos:
@@ -133,6 +134,46 @@ class CompararModelos:
 
         plt.show()
 
+    def matriz_confusion_norm(self, modelos_requeridos):
+        modelos = []
+        for nombre in modelos_requeridos:
+            for m in self.modelos:
+                if m["model_name"] == nombre:
+                    modelos.append(m)
+                    break
+
+        fig, axs = plt.subplots(2,3,figsize=(15, 8))
+        axs = axs.flatten()
+        for ax, m in zip(axs, modelos):
+            cm  = confusion_matrix(
+                m["y_true"],
+                m["y_pred"],
+                normalize='true')
+            hm = sns.heatmap(
+                cm,
+                annot=True,
+                fmt='.2f',
+                cmap='viridis',
+                square=True,
+                cbar=False,
+                linewidths=0.1,
+                ax=ax,
+                annot_kws={"size":5})
+
+            #im = ax.imshow(cm)
+            ax.set_title(m["model_name"], fontsize=10)
+            ax.set_xlabel("Predicción", fontsize=8)
+            ax.set_ylabel("Real", fontsize=8)
+
+        for i in range(len(modelos), len(axs)):
+            axs[i].axis("off")
+
+        fig.subplots_adjust(right=1)
+
+        fig.suptitle("Matrices de confusión normalizadas", fontsize=16)
+        plt.show()
+
+
 
 if __name__ == "__main__":
     carpeta_jsons = os.path.join("dev_model", "resultados")
@@ -153,3 +194,4 @@ if __name__ == "__main__":
     comparador.plot_perdida([deit_tiny, xcit_tiny, vit_tiny, deit3_small, xcit_small, swin_tiny])
     comparador.plot_precision([deit_tiny, xcit_tiny, vit_tiny, deit3_small, xcit_small, swin_tiny])
     comparador.matriz_confusion([deit_tiny, xcit_tiny, vit_tiny, deit3_small, xcit_small, swin_tiny])
+    comparador.matriz_confusion_norm([deit_tiny, xcit_tiny, vit_tiny, deit3_small, xcit_small, swin_tiny])
