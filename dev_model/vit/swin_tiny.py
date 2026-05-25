@@ -1,5 +1,5 @@
 """
-ViT.py
+swin_tiny.py
 Este script es para probar una red de Vision Transformer (ViT) en el dataset reorganizado de FairFace.
 @author: Andrea Gregorio
 @date: 2024-06
@@ -52,16 +52,16 @@ def crear_transform(mean_list = [0.485, 0.456, 0.406], std_list = [0.229, 0.224,
 
 def crear_datasets(transform, subset_fraction):
 
-    train_dataset = CustomDataset(csv_path=os.path.join("fairface_reorganizado", "entrenamiento.csv"),
-                                  img_dir=os.path.join("fairface_reorganizado","Imagenes_entrenamiento"),
+    train_dataset = CustomDataset(csv_path=os.path.join("dev_model", "fairface_reorganizado", "entrenamiento.csv"),
+                                  img_dir=os.path.join("dev_model", "fairface_reorganizado","Imagenes_entrenamiento"),
                                   transform=transform)
 
-    val_dataset = CustomDataset(csv_path=os.path.join("fairface_reorganizado", "validacion.csv"),
-                                img_dir=os.path.join("fairface_reorganizado","Imagenes_validacion"),
+    val_dataset = CustomDataset(csv_path=os.path.join("dev_model", "fairface_reorganizado", "validacion.csv"),
+                                img_dir=os.path.join("dev_model", "fairface_reorganizado","Imagenes_validacion"),
                                 transform=transform)
 
-    test_dataset = CustomDataset(csv_path=os.path.join("fairface_reorganizado", "prueba.csv"),
-                                 img_dir=os.path.join("fairface_reorganizado", "Imagenes_prueba"),
+    test_dataset = CustomDataset(csv_path=os.path.join("dev_model", "fairface_reorganizado", "prueba.csv"),
+                                 img_dir=os.path.join("dev_model", "fairface_reorganizado", "Imagenes_prueba"),
                                  transform=transform)
     # Reducir el tamaño de los datasets para pruebas más rápidas
     train_dataset = aplicar_subset(train_dataset, subset_fraction)
@@ -79,8 +79,18 @@ def crear_dataloaders(train_dataset, val_dataset, test_dataset, batch_size, num_
     return train_loader, val_loader, test_loader
 
 def crear_modelo(model_name, num_classes, device):
-    model = timm.create_model(model_name, pretrained=True, num_classes=num_classes)
+    model = timm.create_model(model_name, pretrained=True, num_classes=num_classes)  # se tarda porque actualiza los pesos
+        # congelar backbone
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # descongelar sólo el clasificador
+    for param in model.get_classifier().parameters():
+        param.requires_grad = True
+        
     model = model.to(device)
+    # intentar con las demás capas congeladas al menos una vez
+    # GradCam en Vit, y #GradCam++ en CRR
 
     return model
 
@@ -238,7 +248,7 @@ if __name__ == '__main__':
     num_epochs = 25
     patience = 5
     warmup_epochs = 2
-    subset_fraction = 0.2  #Para usar solo el 1% del dataset
+    subset_fraction = 0.2  #Para usar solo el 20% del dataset
 
     num_workers = 4
 
@@ -261,8 +271,9 @@ if __name__ == '__main__':
 
     criterion = torch.nn.CrossEntropyLoss()
 
-    optimizer = AdamW(model.parameters(), lr=lr)
-
+    # optimizer = AdamW(model.parameters(), lr=lr)
+    optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-3)
+    
     model, history = entrenar(model, train_loader, val_loader, criterion, optimizer, device, num_epochs, patience, warmup_epochs)
 
     # Evaluar el modelo en el conjunto de prueba y calcular métricas
@@ -276,7 +287,7 @@ if __name__ == '__main__':
 
     # Guardar resultados en JSON para comparar con otros modelos
     os.makedirs("resultados", exist_ok=True)
-    save_path = os.path.join("resultados", f"{model_name}.json")
+    save_path = os.path.join("dev_model", "resultados", f"{model_name}.json")
 
     guardar_json(save_path, model_name, history, test_acc, one_off, test_metrics["y_true"], test_metrics["y_pred"])
     print(f"Archivo {save_path} guardado")

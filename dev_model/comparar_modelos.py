@@ -135,7 +135,7 @@ class CompararModelos:
 
 
 if __name__ == "__main__":
-    carpeta_jsons = "resultados"
+    carpeta_jsons = os.path.join("dev_model", "resultados")
     comparador = CompararModelos(carpeta_jsons)
     # Imprime la tabla general ordenada de mayor one-off a menor
     comparador.resumen()
