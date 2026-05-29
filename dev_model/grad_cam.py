@@ -2,112 +2,141 @@
 grad_cam.py
 Script para generar mapas de calor a partir de una red neuronal entrenada
 @author: Andrea Gregorio
-@date: 2024-06
+@date: 2026-05
 """
-# Librerías
+# 1. Librerías y funciones auxiliares
 import os
-from pathlib import Path
+
+import random
 import matplotlib.pyplot as plt
-import torch
-import torchvision.models as models
-from torchvision.models import resnet50, ResNet50_Weights
-import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
+
+import torch
+import torchvision.transforms as transforms
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-
-# 1. Funciones auxiliares
-def find_image_path() -> str:
-    """Busca una imagen de ejemplo valida para ejecutar el notebook sin cambios manuales."""
-    candidates = [
-        "dev_model/fairface_reorganizado/Imagenes_entrenamiento/5.jpg",
-        "dev_model/fairface_reorganizado/Imagenes_entrenamiento/20.jpg",
-        "dev_model/fairface_reorganizado/Imagenes_entrenamiento/35.jpg",
-        "dev_model/fairface_reorganizado/Imagenes_entrenamiento/48.jpg",
-    ]
-    for p in candidates:
-        if os.path.exists(p):
-            return p
-
-    data_dir = Path("dev_model/fairface_reorganizado/Imagenes_entrenamiento")
-    if data_dir.exists():
-        for ext in ("*.jpg", "*.jpeg", "*.png"):
-            found = list(data_dir.rglob(ext))
-            if found:
-                return str(found[0])
-
-    raise FileNotFoundError(
-        "No se encontro una imagen valida. Ajusta image_path a una ruta existente."
-    )
+import timm
 
 
-def build_input(image_path: str):
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-        ),
-    ])
+class ExplicaGradCAM:
+    def __init__(self, carpeta, pth_path):
+        self.carpeta = carpeta
+        self.pth_path = pth_path
 
-    pil_img = Image.open(image_path).convert("RGB")
-    rgb_img = np.array(pil_img.resize((224, 224)), dtype=np.float32) / 255.0
-    input_tensor = transform(pil_img).unsqueeze(0)
-    return rgb_img, input_tensor
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Usando dispositivo: {self.device}")
 
+        # Cargar modelo
+        self.modelo = self.cargar_modelo()
 
-def reshape_transform_vit(tensor, height=14, width=14):
-    """Convierte tokens del ViT [B, N, C] a formato espacial [B, C, H, W]."""
-    result = tensor[:, 1:, :].reshape(tensor.size(0), height, width, tensor.size(2))
-    return result.permute(0, 3, 1, 2)
+        # Seleccionar imagen
+        random.seed(1)
+        self.img_path = self.seleccionar_imagen_aleatoria(self.carpeta)
+        print(f"Imagen usada: {self.img_path}")
 
-# 2. Entrada y objetivo
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Usando dispositivo: {device}")
+        # Construir input
+        self.rgb_img, self.input_tensor = self.construir_input()
+        self.input_tensor = self.input_tensor.to(self.device)
 
-image_path = find_image_path()
-print(f"Imagen usada: {image_path}")
-rgb_img, input_tensor = build_input(image_path)
-input_tensor = input_tensor.to(device)
+        # predecir clase con el modelo ya entrenado
+        self.clase_predicha = self.predecir_clase()
+        print(f"Clase predicha: {self.clase_predicha}")
 
-weights = ResNet50_Weights.DEFAULT
-cnn_model = resnet50(weights=weights).to(device).eval()
+        # generar gradcam
+        self.visualizacion = self.generar_gradcam()
 
 
-with torch.no_grad():
-    logits = cnn_model(input_tensor)
-pred_class = int(torch.argmax(logits, dim=1).item())
-targets = [ClassifierOutputTarget(pred_class)]
-print(f"Clase objetivo: {pred_class}")
+    def seleccionar_imagen_aleatoria(self, carpeta_img):
+        "Selecciona una imagen de ejemplo válida para probar gradCam"
+        lista_img = os.listdir(carpeta_img)
+        # seleccionar aleatoriamente una imagen de esa carpeta
+        img = os.path.join(carpeta_img, random.choice(lista_img))    
+        return img
+    
+    def construir_input(self):
+        """Mismas transformaciones que en los modelos de ViT que trabajé"""
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ])
 
-# 5. Aplicar Grad-CAM en un ViT
-# Como en ViT no hay mapas convolucionales clásicos, usamos reshape_transform
-# para convertir tokens de parches en una grilla espacial
+        pil_img = Image.open(self.img_path).convert("RGB")
+        rgb_img = np.array(pil_img.resize((224, 224)), dtype=np.float32) / 255.0
+        input_tensor = transform(pil_img).unsqueeze(0)
+        return rgb_img, input_tensor
+    
+    def reshape_transform(self, tensor):
+        print(tensor.shape)
+        result = tensor.permute(0, 3, 1, 2)
+        return result
 
-vit_model = models.vit_b_16(weights=models.ViT_B_16_Weights.DEFAULT).to(device).eval()
-vit_target_layers = [vit_model.encoder.layers[-1].ln_1]
+    def cargar_modelo(self):
+        modelo = timm.create_model("swin_small_patch4_window7_224.ms_in22k_ft_in1k",
+                                   pretrained=False, num_classes=9)
+        # cargar pesos
+        state_dict = torch.load(self.pth_path, map_location=self.device)
+        modelo.load_state_dict(state_dict)
+        modelo = modelo.to(self.device)
 
-vit_gradcam = GradCAM(
-    model=vit_model,
-    target_layers=vit_target_layers,
-    reshape_transform=reshape_transform_vit,
- )
-cam_vit = vit_gradcam(input_tensor=input_tensor, targets=targets)[0, :]
-vis_vit_gc = show_cam_on_image(rgb_img, cam_vit, use_rgb=True)
+        print("Modelo cargado correctamente")
+        return modelo
 
-# Visualizacion comparativa
-fig, axes = plt.subplots(1, 2, figsize=(20, 5))
+    def predecir_clase(self):
+        output = self.modelo(self.input_tensor)
+        pred = output.argmax(dim=1).item()
 
-axes[0].imshow(rgb_img)
-axes[0].set_title("Imagen original")
-axes[0].axis("off")
+        return pred
 
-axes[1].imshow(vis_vit_gc)
-axes[1].set_title("ViT: Grad-CAM")
-axes[1].axis("off")
+    def generar_gradcam(self):
+        # Capa objetivo
+        target_layers = [self.modelo.layers[-1].blocks[-1].norm1]
 
-plt.tight_layout()
-plt.show()
+        # objetivo
+        targets = [ClassifierOutputTarget(self.clase_predicha)]
+
+        # gradcam en grises
+        cam = GradCAM(
+            model=self.modelo,
+            target_layers=target_layers,
+            reshape_transform=self.reshape_transform)
+
+        grayscale_cam = cam(
+            input_tensor=self.input_tensor,
+            targets=targets
+        )
+
+        grayscale_cam = grayscale_cam[0]
+
+        # visualización
+        visualizacion = show_cam_on_image(self.rgb_img, grayscale_cam, use_rgb=True)
+
+        return visualizacion
+
+    def mostrar_comparacion(self):
+        # Visualizacion comparativa
+        fig, axes = plt.subplots(1, 2, figsize=(20, 5))
+
+        axes[0].imshow(self.rgb_img)
+        axes[0].set_title("Imagen original")
+        axes[0].axis("off")
+
+        axes[1].imshow(self.visualizacion)
+        axes[1].set_title("ViT: Grad-CAM")
+        axes[1].axis("off")
+
+        plt.tight_layout()
+        plt.show()
+
+
+if __name__=="__main__":
+    carpeta_img = os.path.join("dev_model", "fairface_reorganizado", "Imagenes_prueba")
+    pth_path = os.path.join("dev_model", "swin_small_patch4_window7_224.ms_in22k_ft_in1k.pth")
+
+    explicador = ExplicaGradCAM(carpeta_img, pth_path)
+    explicador.mostrar_comparacion()
