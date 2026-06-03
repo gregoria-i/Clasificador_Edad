@@ -14,7 +14,7 @@ Autoras: Andrea Itzel Gregorio Martínez y Hannah Sarahi
 ## Objetivo
 
 Desarrollar y comparar modelos de visión por computadora capaces de clasificar personas en rangos de edad a partir de imágenes faciales. El proyecto evalúa distintas arquitecturas de aprendizaje profundo, incluyendo redes neuronales convolucionales y modelos basados en Transformers, con el fin de identificar aquellas que ofrecen mejor desempeño y mayor interpretabilidad.
----
+
 
 ## Instalación
 ### Requisitos
