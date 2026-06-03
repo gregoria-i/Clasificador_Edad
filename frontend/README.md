@@ -2,7 +2,7 @@
 
 La carpeta frontend contiene una interfaz básica diseñada para consumir la API de clasificación de edad.
 
-Autoras: Andrea Itzel Gregorio Martínez y Hannah Sarahi
+Autoras: Andrea Itzel Gregorio Martínez y Hannah Sarahi García Salas
 
 ## Índice
 
