@@ -3,106 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clasificador de Edad por Imagen</title>
+    <title>Estudio Demográfico - Clasificación Automatizada de Edad</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Clasificador de Edad</h1>
-            <p>Sube una imagen para analizar el rango de edad, perfil demográfico e insights personalizados.</p>
+            <h1>Sistema de Clasificación Demográfica</h1>
+            <p>Plataforma analítica universitaria para la estimación de rangos etarios basada en visión computacional.</p>
         </header>
 
         <section class="card api-status-section">
-            <button id="btn-health" class="btn btn-secondary">Verificar Estado de la API</button>
+            <button id="btn-health" class="btn btn-secondary">Verificar Nodo API</button>
             <span id="health-status" class="status-badge">Sin verificar</span>
         </section>
 
         <section class="card upload-section">
             <form id="upload-form">
                 <div class="form-group">
-                    <label for="image-input" class="file-label">Seleccionar Imagen</label>
+                    <label for="image-input" class="file-label">
+                        <strong>Seleccionar muestra de imagen</strong>
+                        <span style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Formatos admitidos: JPG, PNG, WEBP</span>
+                    </label>
                     <input type="file" id="image-input" accept="image/*" required>
                 </div>
                 
                 <div id="preview-container" class="preview-container hidden">
-                    <img id="image-preview" src="#" alt="Vista previa">
+                    <img id="image-preview" src="#" alt="Vista previa de muestra">
                 </div>
 
-                <button type="submit" id="btn-submit" class="btn btn-primary" disabled>Enviar para Predicción</button>
+                <button type="submit" id="btn-submit" class="btn btn-primary" disabled>Procesar y Analizar Muestra</button>
             </form>
         </section>
 
-        <div id="loader" class="loader hidden">Procesando imagen, por favor espera...</div>
+        <div id="loader" class="loader hidden">Ejecutando algoritmos de inferencia demográfica...</div>
 
         <div id="error-message" class="error-box hidden"></div>
 
         <main id="results-container" class="hidden">
-            <section class="card main-prediction">
-                <h2>Predicción Principal</h2>
+            
+            <section class="card">
                 <div class="prediction-highlight">
-                    <span id="main-class" class="class-name">-</span>
-                    <span id="main-prob" class="probability-badge">-</span>
+                    <div>
+                        <h2>Inferencia Predominante (Top 1)</h2>
+                        <span id="main-class" class="class-name">-</span>
+                    </div>
+                    <div>
+                        <span id="main-prob" class="probability-badge">-</span>
+                    </div>
                 </div>
             </section>
 
             <section class="card">
-                <h3>Top 5 Predicciones</h3>
+                <h3>Distribución Probabilística (Top 5)</h3>
                 <ul id="topk-list" class="topk-list"></ul>
             </section>
 
-            <section class="card recommendation-section">
-                <h2 id="rec-title">-</h2>
+            <section class="card">
+                <h2 id="rec-title" style="border-bottom: 2px solid var(--border-clean); padding-bottom: 0.5rem;">-</h2>
                 <p id="rec-summary" class="lead-text">-</p>
 
-                <hr>
-
-                <div class="grid-2">
-                    <div>
-                        <h3>Rangos de Edad Estimados</h3>
-                        <p><strong>Primario:</strong> <span id="pred-primary-range">-</span> (<span id="pred-primary-conf">-</span>)</p>
-                        <p><strong>Secundario:</strong> <span id="pred-secondary-range">-</span> (<span id="pred-secondary-conf">-</span>)</p>
+                <div class="grid-2 mt-1">
+                    <div class="report-block">
+                        <h4>Rangos de Edad Proyectados</h4>
+                        <p style="font-size: 0.95rem; margin-bottom: 0.25rem;"><strong>Intervalo Primario:</strong> <span id="pred-primary-range">-</span> (<span id="pred-primary-conf">-</span>)</p>
+                        <p style="font-size: 0.95rem;"><strong>Intervalo Secundario:</strong> <span id="pred-secondary-range">-</span> (<span id="pred-secondary-conf">-</span>)</p>
                     </div>
-                    <div>
-                        <h3>Perfil Demográfico</h3>
-                        <p><strong>Segmento:</strong> <span id="demo-segment">-</span></p>
-                        <p id="demo-summary">-</p>
-                        <p class="note"><em>Nota de transición:</em> <span id="demo-note">-</span></p>
+                    <div class="report-block">
+                        <h4>Clasificación de Perfil</h4>
+                        <p style="font-size: 0.95rem; margin-bottom: 0.5rem;"><strong>Segmento:</strong> <span id="demo-segment">-</span></p>
+                        <p id="demo-summary" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">-</p>
+                        <p id="demo-note" class="note">-</p>
                     </div>
                 </div>
             </section>
 
             <section class="card">
-                <h3>Insights de Comportamiento</h3>
+                <h3>Matriz de Tendencias de Comportamiento</h3>
                 <div class="grid-3">
                     <div>
-                        <h4>Educación y Aprendizaje</h4>
+                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Educación y Aprendizaje</h4>
                         <ul id="insight-education"></ul>
                     </div>
                     <div>
-                        <h4>Carrera y Desarrollo</h4>
+                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Carrera y Desarrollo</h4>
                         <ul id="insight-career"></ul>
                     </div>
                     <div>
-                        <h4>Tecnología y Medios</h4>
+                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Tecnología y Medios</h4>
                         <ul id="insight-tech"></ul>
                     </div>
                 </div>
-                <div class="grid-2 mt-1">
+                <div class="grid-2 mt-1" style="border-top: 1px solid var(--border-clean); padding-top: 1.5rem;">
                     <div>
-                        <h4>Intereses del Consumidor</h4>
+                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Intereses de Consumo</h4>
                         <ul id="insight-consumer"></ul>
                     </div>
                     <div>
-                        <h4>Preferencias de Servicio</h4>
+                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Preferencias de Servicio</h4>
                         <ul id="insight-services"></ul>
                     </div>
                 </div>
             </section>
 
-            <section class="card format-actions">
-                <h3>Acciones y Recomendaciones</h3>
-                <div class="grid-3">
+            <section class="card">
+                <h3>Directrices y Recomendaciones de Segmento</h3>
+                <div class="grid-3 mt-1">
                     <div class="action-block">
                         <h4>Acciones Prioritarias</h4>
                         <ul id="rec-priority"></ul>

@@ -89,7 +89,7 @@ Requisitos de interfaz:
 
 Requisitos tecnicos:
 
-* Entrega 3 archivos separados: index.html, styles.css y app.js.
+* Entrega 3 archivos separados: index.html, styles.css y model.js.
 * Usa fetch + FormData.
 * Valida que el archivo exista y sea imagen antes de enviar.
 * Convierte probabilidades a porcentaje con 2 decimales.
