@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de Edad por Imagen</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Clasificador de Edad</h1>
+            <p>Sube una imagen para analizar el rango de edad, perfil demográfico e insights personalizados.</p>
+        </header>
+
+        <section class="card api-status-section">
+            <button id="btn-health" class="btn btn-secondary">Verificar Estado de la API</button>
+            <span id="health-status" class="status-badge">Sin verificar</span>
+        </section>
+
+        <section class="card upload-section">
+            <form id="upload-form">
+                <div class="form-group">
+                    <label for="image-input" class="file-label">Seleccionar Imagen</label>
+                    <input type="file" id="image-input" accept="image/*" required>
+                </div>
+                
+                <div id="preview-container" class="preview-container hidden">
+                    <img id="image-preview" src="#" alt="Vista previa">
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn btn-primary" disabled>Enviar para Predicción</button>
+            </form>
+        </section>
+
+        <div id="loader" class="loader hidden">Procesando imagen, por favor espera...</div>
+
+        <div id="error-message" class="error-box hidden"></div>
+
+        <main id="results-container" class="hidden">
+            <section class="card main-prediction">
+                <h2>Predicción Principal</h2>
+                <div class="prediction-highlight">
+                    <span id="main-class" class="class-name">-</span>
+                    <span id="main-prob" class="probability-badge">-</span>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Top 5 Predicciones</h3>
+                <ul id="topk-list" class="topk-list"></ul>
+            </section>
+
+            <section class="card recommendation-section">
+                <h2 id="rec-title">-</h2>
+                <p id="rec-summary" class="lead-text">-</p>
+
+                <hr>
+
+                <div class="grid-2">
+                    <div>
+                        <h3>Rangos de Edad Estimados</h3>
+                        <p><strong>Primario:</strong> <span id="pred-primary-range">-</span> (<span id="pred-primary-conf">-</span>)</p>
+                        <p><strong>Secundario:</strong> <span id="pred-secondary-range">-</span> (<span id="pred-secondary-conf">-</span>)</p>
+                    </div>
+                    <div>
+                        <h3>Perfil Demográfico</h3>
+                        <p><strong>Segmento:</strong> <span id="demo-segment">-</span></p>
+                        <p id="demo-summary">-</p>
+                        <p class="note"><em>Nota de transición:</em> <span id="demo-note">-</span></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>Insights de Comportamiento</h3>
+                <div class="grid-3">
+                    <div>
+                        <h4>Educación y Aprendizaje</h4>
+                        <ul id="insight-education"></ul>
+                    </div>
+                    <div>
+                        <h4>Carrera y Desarrollo</h4>
+                        <ul id="insight-career"></ul>
+                    </div>
+                    <div>
+                        <h4>Tecnología y Medios</h4>
+                        <ul id="insight-tech"></ul>
+                    </div>
+                </div>
+                <div class="grid-2 mt-1">
+                    <div>
+                        <h4>Intereses del Consumidor</h4>
+                        <ul id="insight-consumer"></ul>
+                    </div>
+                    <div>
+                        <h4>Preferencias de Servicio</h4>
+                        <ul id="insight-services"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card format-actions">
+                <h3>Acciones y Recomendaciones</h3>
+                <div class="grid-3">
+                    <div class="action-block">
+                        <h4>Acciones Prioritarias</h4>
+                        <ul id="rec-priority"></ul>
+                    </div>
+                    <div class="action-block">
+                        <h4>Servicios Sugeridos</h4>
+                        <ul id="rec-services"></ul>
+                    </div>
+                    <div class="action-block">
+                        <h4>Canales de Comunicación</h4>
+                        <ul id="rec-channels"></ul>
+                    </div>
+                </div>
+            </section>
+            
+            <footer id="meta-info" class="meta-info"></footer>
+        </main>
+    </div>
+    <script src="model.js"></script>
+</body>
+</html>
