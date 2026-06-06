@@ -11,11 +11,13 @@ fairface_reorganizado/
 .cache/
 
 # Carpetas de modelos y resultados
-#cnn/
-#vit/
+resultados/
 app/utils/  # imagenes con las que hice pruebas
 app/swin_inferencia_probabilidades.ipynb
 app/swin_inferencia_probabilidades.py
 
 # PTH del modelo seleccionado
 app/models/
+
+# Llave de gemini
+.env
