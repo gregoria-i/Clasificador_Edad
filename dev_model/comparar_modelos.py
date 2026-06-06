@@ -114,10 +114,9 @@ class CompararModelos:
         for ax, m in zip(axs, modelos):
             cm = confusion_matrix(
                 m["y_true"],
-                m["y_pred"]
-            )
+                m["y_pred"])
 
-            im = ax.imshow(cm)
+            im = ax.imshow(cm, cmap='Blues')
             ax.set_title(m["model_name"])
             ax.set_xlabel("Predicción")
             ax.set_ylabel("Real")
@@ -153,7 +152,7 @@ class CompararModelos:
                 cm,
                 annot=True,
                 fmt='.2f',
-                cmap='viridis',
+                cmap='Blues',
                 square=True,
                 cbar=False,
                 linewidths=0.1,

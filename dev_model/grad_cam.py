@@ -32,7 +32,7 @@ class ExplicaGradCAM:
         self.modelo = self.cargar_modelo()
 
         # Seleccionar imagen
-        random.seed(1)
+        random.seed(10)
         self.img_path = self.seleccionar_imagen_aleatoria(self.carpeta)
         print(f"Imagen usada: {self.img_path}")
 
@@ -146,7 +146,7 @@ class ExplicaProcesoGradCAM:
         self.modelo = self.cargar_modelo()
 
         # Seleccionar imagen
-        random.seed(1)
+        random.seed(10)
         self.img_path = self.seleccionar_imagen_aleatoria(self.carpeta)
         print(f"Imagen usada: {self.img_path}")
 
