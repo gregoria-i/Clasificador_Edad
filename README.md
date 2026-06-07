@@ -1,7 +1,7 @@
 # Clasificador_Edad
 Proyecto de creación de clasificador por Redes Neuronales para clasificar personas en rangos de edad a partir de imágenes faciales utilizando modelos Vision Transformer y redes neuronales convolucionales.
 
-Autoras: Andrea Itzel Gregorio Martínez y Hannah Sarahi
+Autoras: Andrea Itzel Gregorio Martínez y Hannah Sarahi García Salas
 
 ## Índice
 
