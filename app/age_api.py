@@ -85,8 +85,7 @@ def gemini_recommend_simple(top1: dict, top2: dict) -> dict:
     f"Confianza: {prob2_str:.1f}%\n"
     "Genera un análisis demográfico considerando ambas predicciones.\n"
     "IMPORTANTE:\n"
-    "No afirmes características personales específicas.\n"
-    "Habla únicamente de tendencias típicas del segmento demográfico.\n"
+    "No afirmes características personales específicas, habla únicamente de tendencias típicas del segmento demográfico.\n"
     "Si las edades son cercanas, menciona la posible transición entre grupos.\n"
     "Responde ÚNICAMENTE JSON válido(sin markdown, sin comentarios) con esta estructura exacta:\n"
     "{\n"
@@ -111,25 +110,29 @@ def gemini_recommend_simple(top1: dict, top2: dict) -> dict:
     "\"service_preferences\": []\n"
     "}\n"
     "}\n"
+    "Sé breve en el perfil demográfico y los insigths.\n"
     "Todo en español, conciso y claro para interfaz web.")
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-    text = (response.text or "").strip()
-
-    if text.startswith("```"):
-        lines = text.splitlines()
-        if len(lines) >= 3:
-            text = "\n".join(lines[1:-1]).strip()
-
     try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
+        text = (response.text or "").strip()
+
+        if text.startswith("```"):
+            lines = text.splitlines()
+            if len(lines) >= 3:
+                text = "\n".join(lines[1:-1]).strip()
+
         return json.loads(text)
 
-    except json.JSONDecodeError:
-
+    except Exception:
+        # Fallback si Gemini falla por cuota, modelo, red, etc.
         return {
             "title": "Análisis demográfico",
-            "summary": text,
+            "summary": "La recomendación automática no está disponible en este momento.",
             "prediction": {
                 "primary_age_range": top1["class_name"],
                 "primary_confidence": f"{top1['probability']*100:.1f}%",
@@ -138,7 +141,7 @@ def gemini_recommend_simple(top1: dict, top2: dict) -> dict:
             },
             "demographic_profile": {
                 "segment_name": "No disponible",
-                "summary": text,
+                "summary": "No se pudo generar el análisis demográfico.",
                 "age_transition_note": ""
             },
             "insights": {

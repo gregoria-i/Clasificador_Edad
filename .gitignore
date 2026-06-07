@@ -20,4 +20,4 @@ app/swin_inferencia_probabilidades.py
 app/models/
 
 # Llave de gemini
-.env
+app/.env

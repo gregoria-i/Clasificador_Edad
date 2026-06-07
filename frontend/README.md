@@ -34,8 +34,9 @@ Contexto de la API:
 
 Si todo sale bien, /predict responde JSON con esta forma aproximada:
 
-* top1: { class_id, class_name, probability }
-* topk: arreglo de 5 elementos con { class_id, class_name, probability }
+* prediction: { class_name, probability }
+* second_prediction: { class_name, probability }
+* top5: arreglo de 5 elementos con { class_name, probability }
 * recommendation: {
   title,
   summary,
@@ -56,36 +57,37 @@ Si todo sale bien, /predict responde JSON con esta forma aproximada:
   technology_and_media: [],
   consumer_interests: [],
   service_preferences: []
-  },
-  recommendations: {
-  priority_actions: [],
-  suggested_services: [],
-  communication_channels: []
   }
   }
-* filename, device, model_path
-
-Si hay error, responde con detail.
+* Si hay error, responde con detail.
 
 Requisitos de interfaz:
 
 * Titulo y descripcion corta.
 * Boton para probar conexion con /health y mostrar resultado.
 * Input para subir imagen, con vista previa.
-* Boton Enviar para llamar /predict.
+* Boton "Analizar imagen" para llamar /predict.
 * Estado de carga mientras procesa.
 * Manejo de errores legible para el usuario.
-* Mostrar resultado:
+* Mostrar resultado en tarjetas o secciones visualmente separadas:
 
-  * Prediccion principal (nombre y probabilidad en porcentaje).
-  * Lista top 5.
+  * Predicción principal (rango de edad y probabilidad en porcentaje).
+  * Segunda predicción.
+  * Top 5 predicciones con barras de progreso.
   * recommendation.title.
   * recommendation.summary.
-  * prediction (primera y segunda prediccion con sus probabilidades).
+  * prediction (primera y segunda predicción con sus probabilidades).
   * demographic_profile.
   * insights.
-  * recommendations.
-* Diseño limpio y simple, responsive, sin librerias externas.
+
+Diseño:
+* Limpio, moderno y responsive.
+* Sin librerías externas.
+* Estilo tipo dashboard profesional de inteligencia artificial.
+* Uso de tarjetas (cards), bordes redondeados, sombras suaves y buena jerarquía visual.
+* Mucho espacio en blanco y apariencia similar a herramientas modernas de machine learning.
+* Que parezca una pequeña herramienta profesional.
+* Paleta sobria basada en violeta, blanco y grises claros.
 
 Requisitos tecnicos:
 

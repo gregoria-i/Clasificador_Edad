@@ -1,195 +1,352 @@
-// Configuración global de la API
-const API_URL = 'http://127.0.0.1:8000';
+// URL base de la API (configurable)
+const API_URL = "http://127.0.0.1:8000";
 
-// Elementos del DOM
-const btnHealth = document.getElementById('btn-health');
-const healthStatus = document.getElementById('health-status');
-const imageInput = document.getElementById('image-input');
-const imagePreview = document.getElementById('image-preview');
-const previewContainer = document.getElementById('preview-container');
-const btnSubmit = document.getElementById('btn-submit');
-const uploadForm = document.getElementById('upload-form');
-const loader = document.getElementById('loader');
-const errorMessage = document.getElementById('error-message');
-const resultsContainer = document.getElementById('results-container');
+// Referencias a elementos del DOM
+const healthCheckBtn = document.getElementById("healthCheckBtn");
+const healthStatus = document.getElementById("healthStatus");
+const healthMessage = document.getElementById("healthMessage");
 
-// --- MANEJO DEL ESTADO DE LA API (/health) ---
-btnHealth.addEventListener('click', async () => {
-    healthStatus.textContent = 'Verificando...';
-    healthStatus.className = 'status-badge';
-    
-    try {
-        const response = await fetch(`${API_URL}/health`);
-        if (!response.ok) throw new Error();
-        
-        healthStatus.textContent = 'En línea';
-        healthStatus.className = 'status-badge online';
-    } catch (error) {
-        healthStatus.textContent = 'Fuera de línea';
-        healthStatus.className = 'status-badge offline';
-    }
-});
+const imageInput = document.getElementById("imageInput");
+const previewContainer = document.getElementById("previewContainer");
+const imagePreview = document.getElementById("imagePreview");
+const analyzeBtn = document.getElementById("analyzeBtn");
+const uploadError = document.getElementById("uploadError");
 
-// --- MANEJO DE VISTA PREVIA Y VALIDACIÓN DE IMAGEN ---
-imageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    
-    // Validar que exista archivo y sea una imagen
-    if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        
-        reader.onload = (event) => {
-            imagePreview.src = event.target.result;
-            previewContainer.classList.remove('hidden');
-            btnSubmit.disabled = false; // Habilitar envío si es válido
-            clearError();
-        };
-        
-        reader.readAsDataURL(file);
-    } else {
-        showError('Por favor, selecciona un archivo de imagen válido (.jpg, .png, etc.)');
-        resetUpload();
-    }
-});
+const loadingIndicator = document.getElementById("loadingIndicator");
+const globalError = document.getElementById("globalError");
 
-// --- ENVÍO DEL FORMULARIO Y CONSUMO DE /PREDICT ---
-uploadForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const file = imageInput.files[0];
-    if (!file) return;
+const resultsContainer = document.getElementById("resultsContainer");
+const primaryPredictionEl = document.getElementById("primaryPrediction");
+const secondaryPredictionEl = document.getElementById("secondaryPrediction");
+const top5Container = document.getElementById("top5Container");
 
-    // Preparar FormData
-    const formData = new FormData();
-    formData.append('file', file);
+const recTitle = document.getElementById("recTitle");
+const recSummary = document.getElementById("recSummary");
+const recPrediction = document.getElementById("recPrediction");
+const recDemographic = document.getElementById("recDemographic");
+const recInsights = document.getElementById("recInsights");
 
-    // Ajustar UI para estado de carga
-    setLoading(true);
-    clearError();
-    resultsContainer.classList.add('hidden');
-
-    try {
-        const response = await fetch(`${API_URL}/predict`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            // Capturar el campo "detail" mandado por el backend o fallback genérico
-            throw new Error(data.detail || 'Ocurrió un error al procesar la imagen.');
-        }
-
-        // Renderizar los resultados si todo fue exitoso
-        renderResults(data);
-
-    } catch (error) {
-        showError(error.message);
-    } finally {
-        setLoading(false);
-    }
-});
-
-// --- FUNCIONES AUXILIARES Y RENDERIZADO ---
-
-// Transforma valores decimales (0.856) a formato porcentaje (85.60%)
-function formatPercentage(value) {
-    // Si la API ya devuelve de 0-100 en vez de 0-1, remover el "* 100"
-    const parsedValue = value <= 1 ? value * 100 : value;
-    return `${parsedValue.toFixed(2)}%`;
+// Utilidad: formatea probabilidad [0,1] a porcentaje con 2 decimales
+function toPercent(prob) {
+  if (typeof prob !== "number" || isNaN(prob)) return "—";
+  return (prob * 100).toFixed(2) + "%";
 }
 
-// Renderiza listas genéricas para la sección de insights/recommendations
-function fillList(elementId, itemsArray) {
-    const ul = document.getElementById(elementId);
-    ul.innerHTML = ''; // Limpiar previo
-    if (itemsArray && itemsArray.length > 0) {
-        itemsArray.forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = item;
-            ul.appendChild(li);
-        });
-    } else {
-        const li = document.createElement('li');
-        li.textContent = 'No hay datos disponibles';
-        li.style.color = '#6b7280';
-        ul.appendChild(li);
-    }
+// Utilidad: limpia mensajes de error
+function clearErrors() {
+  uploadError.textContent = "";
+  globalError.textContent = "";
 }
 
-function renderResults(data) {
-    // 1. Predicción Principal
-    document.getElementById('main-class').textContent = data.top1.class_name;
-    document.getElementById('main-prob').textContent = formatPercentage(data.top1.probability);
+// Manejo de vista previa de imagen
+imageInput.addEventListener("change", (event) => {
+  clearErrors();
+  const file = event.target.files[0];
 
-    // 2. Lista Top 5 (Top K)
-    const topkList = document.getElementById('topk-list');
-    topkList.innerHTML = '';
-    data.topk.forEach(item => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${item.class_name}</span> <strong>${formatPercentage(item.probability)}</strong>`;
-        topkList.appendChild(li);
+  if (!file) {
+    previewContainer.classList.add("hidden");
+    imagePreview.src = "";
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    uploadError.textContent = "El archivo seleccionado no es una imagen válida.";
+    imageInput.value = "";
+    previewContainer.classList.add("hidden");
+    imagePreview.src = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.src = e.target.result;
+    previewContainer.classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+});
+
+// Probar conexión con /health
+healthCheckBtn.addEventListener("click", async () => {
+  clearErrors();
+  healthStatus.classList.remove("hidden");
+  healthMessage.textContent = "Verificando estado de la API...";
+  healthMessage.classList.remove("health-ok", "health-fail");
+
+  try {
+    const response = await fetch(`${API_URL}/health`, {
+      method: "GET"
     });
 
-    // 3. Bloque de recomendaciones principal y predicción estructurada
-    const rec = data.recommendation;
-    document.getElementById('rec-title').textContent = rec.title;
-    document.getElementById('rec-summary').textContent = rec.summary;
-
-    document.getElementById('pred-primary-range').textContent = rec.prediction.primary_age_range;
-    document.getElementById('pred-primary-conf').textContent = formatPercentage(rec.prediction.primary_confidence);
-    document.getElementById('pred-secondary-range').textContent = rec.prediction.secondary_age_range || 'N/A';
-    document.getElementById('pred-secondary-conf').textContent = rec.prediction.secondary_confidence ? formatPercentage(rec.prediction.secondary_confidence) : '0.00%';
-
-    // 4. Perfil Demográfico
-    document.getElementById('demo-segment').textContent = rec.demographic_profile.segment_name;
-    document.getElementById('demo-summary').textContent = rec.demographic_profile.summary;
-    document.getElementById('demo-note').textContent = rec.demographic_profile.age_transition_note || 'Ninguna';
-
-    // 5. Inyección de listas dinámicas (Insights)
-    fillList('insight-education', rec.insights.education_and_learning);
-    fillList('insight-career', rec.insights.career_and_development);
-    fillList('insight-tech', rec.insights.technology_and_media);
-    fillList('insight-consumer', rec.insights.consumer_interests);
-    fillList('insight-services', rec.insights.service_preferences);
-
-    // 6. Inyección de listas dinámicas (Recommendations)
-    fillList('rec-priority', rec.recommendations.priority_actions);
-    fillList('rec-services', rec.recommendations.suggested_services);
-    fillList('rec-channels', rec.recommendations.communication_channels);
-
-    // 7. Metadata técnica final
-    document.getElementById('meta-info').textContent = `Archivo: ${data.filename} | Dispositivo: ${data.device} | Modelo: ${data.model_path}`;
-
-    // Mostrar el contenedor global
-    resultsContainer.classList.remove('hidden');
-}
-
-// Controladores de UI básicos
-function setLoading(isLoading) {
-    if (isLoading) {
-        loader.classList.remove('hidden');
-        btnSubmit.disabled = true;
-    } else {
-        loader.classList.add('hidden');
-        btnSubmit.disabled = false;
+    if (!response.ok) {
+      throw new Error(`Código de estado: ${response.status}`);
     }
+
+    const data = await response.json().catch(() => ({}));
+    healthMessage.textContent =
+      "API en línea. Respuesta: " + JSON.stringify(data);
+    healthMessage.classList.add("health-ok");
+  } catch (error) {
+    healthMessage.textContent =
+      "No se pudo conectar con la API. Detalle: " + error.message;
+    healthMessage.classList.add("health-fail");
+  }
+});
+
+// Enviar imagen a /predict
+analyzeBtn.addEventListener("click", async () => {
+  clearErrors();
+
+  const file = imageInput.files[0];
+  if (!file) {
+    uploadError.textContent = "Por favor, selecciona una imagen antes de analizar.";
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    uploadError.textContent = "El archivo seleccionado no es una imagen válida.";
+    return;
+  }
+
+  // Mostrar estado de carga
+  loadingIndicator.classList.remove("hidden");
+  resultsContainer.classList.add("hidden");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch(`${API_URL}/predict`, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Si la API devuelve error con campo detail
+      const detail = data && data.detail ? data.detail : "Error desconocido.";
+      throw new Error(detail);
+    }
+
+    // Renderizar resultados si todo va bien
+    renderResults(data);
+  } catch (error) {
+    globalError.textContent =
+      "Ocurrió un problema al procesar la imagen: " + error.message;
+    resultsContainer.classList.add("hidden");
+  } finally {
+    loadingIndicator.classList.add("hidden");
+  }
+});
+
+// Renderizado principal de resultados
+function renderResults(data) {
+  resultsContainer.classList.remove("hidden");
+
+  renderPrimarySecondary(data);
+  renderTop5(data.top5 || []);
+  renderRecommendation(data.recommendation);
 }
 
-function showError(msg) {
-    errorMessage.textContent = msg;
-    errorMessage.classList.remove('hidden');
+// Renderiza predicción principal y secundaria
+function renderPrimarySecondary(data) {
+  const prediction = data.prediction || {};
+  const secondPrediction = data.second_prediction || {};
+
+  // Predicción principal
+  primaryPredictionEl.innerHTML = "";
+  const mainAge =
+    prediction.class_name ||
+    (data.recommendation &&
+      data.recommendation.prediction &&
+      data.recommendation.prediction.primary_age_range) ||
+    "Desconocido";
+
+  const mainProb = prediction.probability;
+
+  const mainAgeEl = document.createElement("p");
+  mainAgeEl.className = "prediction-age-range";
+  mainAgeEl.textContent = mainAge;
+
+  const mainProbEl = document.createElement("p");
+  mainProbEl.className = "prediction-prob";
+  mainProbEl.textContent = "Probabilidad: " + toPercent(mainProb);
+
+  primaryPredictionEl.appendChild(mainAgeEl);
+  primaryPredictionEl.appendChild(mainProbEl);
+
+  // Segunda predicción
+  secondaryPredictionEl.innerHTML = "";
+  const secondAge =
+    secondPrediction.class_name ||
+    (data.recommendation &&
+      data.recommendation.prediction &&
+      data.recommendation.prediction.secondary_age_range) ||
+    "Desconocido";
+
+  const secondProb = secondPrediction.probability;
+
+  const secondAgeEl = document.createElement("p");
+  secondAgeEl.className = "prediction-age-range";
+  secondAgeEl.textContent = secondAge;
+
+  const secondProbEl = document.createElement("p");
+  secondProbEl.className = "prediction-prob";
+  secondProbEl.textContent = "Probabilidad: " + toPercent(secondProb);
+
+  secondaryPredictionEl.appendChild(secondAgeEl);
+  secondaryPredictionEl.appendChild(secondProbEl);
 }
 
-function clearError() {
-    errorMessage.textContent = '';
-    errorMessage.classList.add('hidden');
+// Renderiza top 5 predicciones con barras
+function renderTop5(top5) {
+  top5Container.innerHTML = "";
+
+  if (!Array.isArray(top5) || top5.length === 0) {
+    const p = document.createElement("p");
+    p.className = "placeholder";
+    p.textContent = "No se recibieron predicciones adicionales.";
+    top5Container.appendChild(p);
+    return;
+  }
+
+  top5.forEach((item, index) => {
+    const className = item.class_name || `Clase ${index + 1}`;
+    const prob = item.probability;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "top5-item";
+
+    const header = document.createElement("div");
+    header.className = "top5-header";
+
+    const label = document.createElement("span");
+    label.className = "top5-class";
+    label.textContent = `${index + 1}. ${className}`;
+
+    const probSpan = document.createElement("span");
+    probSpan.className = "top5-prob";
+    probSpan.textContent = toPercent(prob);
+
+    header.appendChild(label);
+    header.appendChild(probSpan);
+
+    const bar = document.createElement("div");
+    bar.className = "progress-bar";
+
+    const fill = document.createElement("div");
+    fill.className = "progress-fill";
+    fill.style.width = `${Math.min(100, Math.max(0, prob * 100 || 0))}%`;
+
+    bar.appendChild(fill);
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(bar);
+
+    top5Container.appendChild(wrapper);
+  });
 }
 
-function resetUpload() {
-    imageInput.value = '';
-    previewContainer.classList.add('hidden');
-    imagePreview.src = '#';
-    btnSubmit.disabled = true;
+// Renderiza recommendation completa
+function renderRecommendation(recommendation) {
+  if (!recommendation) {
+    recTitle.textContent = "Sin recomendación disponible";
+    recSummary.textContent =
+      "La API no devolvió información de recomendación para esta imagen.";
+    recPrediction.innerHTML = '<p class="placeholder">Sin datos.</p>';
+    recDemographic.innerHTML = '<p class="placeholder">Sin datos.</p>';
+    recInsights.innerHTML = '<p class="placeholder">Sin datos.</p>';
+    return;
+  }
+
+  // Título y resumen
+  recTitle.textContent = recommendation.title || "Recomendación del modelo";
+  recSummary.textContent =
+    recommendation.summary ||
+    "No se proporcionó un resumen detallado para esta predicción.";
+
+  // Predicciones de rango de edad
+  const pred = recommendation.prediction || {};
+  recPrediction.innerHTML = "";
+
+  const primaryLine = document.createElement("p");
+  primaryLine.innerHTML =
+    `<span class="rec-label">Primaria:</span> ` +
+    `${pred.primary_age_range || "N/D"} ` +
+    `<span class="rec-tag">${toPercent(pred.primary_confidence)}</span>`;
+
+  const secondaryLine = document.createElement("p");
+  secondaryLine.innerHTML =
+    `<span class="rec-label">Secundaria:</span> ` +
+    `${pred.secondary_age_range || "N/D"} ` +
+    `<span class="rec-tag">${toPercent(pred.secondary_confidence)}</span>`;
+
+  recPrediction.appendChild(primaryLine);
+  recPrediction.appendChild(secondaryLine);
+
+  // Perfil demográfico
+  const demo = recommendation.demographic_profile || {};
+  recDemographic.innerHTML = "";
+
+  const segment = document.createElement("p");
+  segment.innerHTML =
+    `<span class="rec-label">Segmento:</span> ${demo.segment_name || "N/D"}`;
+
+  const demoSummary = document.createElement("p");
+  demoSummary.textContent = demo.summary || "Sin resumen de perfil demográfico.";
+
+  const transition = document.createElement("p");
+  transition.innerHTML =
+    `<span class="rec-label">Transición de edad:</span> ` +
+    `${demo.age_transition_note || "Sin información."}`;
+
+  recDemographic.appendChild(segment);
+  recDemographic.appendChild(demoSummary);
+  recDemographic.appendChild(transition);
+
+  // Insights
+  const insights = recommendation.insights || {};
+  recInsights.innerHTML = "";
+
+  const insightSections = [
+    { key: "education_and_learning", label: "Educación y aprendizaje" },
+    { key: "career_and_development", label: "Carrera y desarrollo" },
+    { key: "technology_and_media", label: "Tecnología y medios" },
+    { key: "consumer_interests", label: "Intereses de consumo" },
+    { key: "service_preferences", label: "Preferencias de servicios" }
+  ];
+
+  let hasAnyInsight = false;
+
+  insightSections.forEach((section) => {
+    const items = insights[section.key];
+    if (!Array.isArray(items) || items.length === 0) return;
+
+    hasAnyInsight = true;
+
+    const group = document.createElement("div");
+    group.className = "insight-group";
+
+    const title = document.createElement("p");
+    title.className = "insight-title";
+    title.textContent = section.label;
+
+    const list = document.createElement("ul");
+    list.className = "insight-list";
+
+    items.forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      list.appendChild(li);
+    });
+
+    group.appendChild(title);
+    group.appendChild(list);
+    recInsights.appendChild(group);
+  });
+
+  if (!hasAnyInsight) {
+    recInsights.innerHTML =
+      '<p class="placeholder">No se proporcionaron insights adicionales.</p>';
+  }
 }

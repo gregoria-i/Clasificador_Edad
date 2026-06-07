@@ -1,132 +1,120 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estudio Demográfico - Clasificación Automatizada de Edad</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>Clasificación de rango etario</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Sistema de Clasificación Demográfica</h1>
-            <p>Plataforma analítica universitaria para la estimación de rangos etarios basada en visión computacional.</p>
-        </header>
+  <div class="app">
+    <header class="app-header">
+      <div>
+        <h1>Clasificación de rango etario</h1>
+        <p class="subtitle">
+          Sube una imagen de rostro y obtén una estimación de rango de edad, perfil demográfico y generalizaciones clave.
+        </p>
+      </div>
+      <button id="healthCheckBtn" class="btn btn-secondary">
+        Probar conexión con API
+      </button>
+    </header>
 
-        <section class="card api-status-section">
-            <button id="btn-health" class="btn btn-secondary">Verificar Nodo API</button>
-            <span id="health-status" class="status-badge">Sin verificar</span>
+    <section id="healthStatus" class="card card-health hidden">
+      <h2>Estado de la API</h2>
+      <p id="healthMessage" class="health-message"></p>
+    </section>
+
+    <main class="layout">
+      <section class="card card-upload">
+        <h2>1. Subir imagen</h2>
+        <p class="section-description">
+          Selecciona una imagen de rostro en formato JPG o PNG para analizar.
+        </p>
+
+        <div class="upload-area">
+          <label for="imageInput" class="upload-label">
+            <span>Haz clic para seleccionar una imagen</span>
+            <span class="upload-hint">o arrastra y suelta aquí</span>
+          </label>
+          <input type="file" id="imageInput" accept="image/*" />
+        </div>
+
+        <div id="previewContainer" class="preview-container hidden">
+          <p class="preview-title">Vista previa</p>
+          <img id="imagePreview" alt="Vista previa de la imagen" />
+        </div>
+
+        <button id="analyzeBtn" class="btn btn-primary">
+          Analizar imagen
+        </button>
+        <p id="uploadError" class="error-message"></p>
+      </section>
+
+      <section class="card card-status">
+        <h2>2. Estado de procesamiento</h2>
+        <div id="loadingIndicator" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Analizando imagen con el modelo de edad...</span>
+        </div>
+        <p id="globalError" class="error-message"></p>
+      </section>
+
+      <section id="resultsContainer" class="results-grid hidden">
+        <!-- Predicciones principales -->
+        <section class="card">
+          <h2>Predicción principal</h2>
+          <div id="primaryPrediction" class="prediction-main">
+            <p class="placeholder">Aún no hay resultados.</p>
+          </div>
         </section>
 
-        <section class="card upload-section">
-            <form id="upload-form">
-                <div class="form-group">
-                    <label for="image-input" class="file-label">
-                        <strong>Seleccionar muestra de imagen</strong>
-                        <span style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Formatos admitidos: JPG, PNG, WEBP</span>
-                    </label>
-                    <input type="file" id="image-input" accept="image/*" required>
-                </div>
-                
-                <div id="preview-container" class="preview-container hidden">
-                    <img id="image-preview" src="#" alt="Vista previa de muestra">
-                </div>
-
-                <button type="submit" id="btn-submit" class="btn btn-primary" disabled>Procesar y Analizar Muestra</button>
-            </form>
+        <section class="card">
+          <h2>Segunda predicción</h2>
+          <div id="secondaryPrediction" class="prediction-secondary">
+            <p class="placeholder">Aún no hay resultados.</p>
+          </div>
         </section>
 
-        <div id="loader" class="loader hidden">Ejecutando algoritmos de inferencia demográfica...</div>
+        <!-- Top 5 -->
+        <section class="card card-top5">
+          <h2>Top 5 predicciones</h2>
+          <div id="top5Container" class="top5-list">
+            <p class="placeholder">Aún no hay resultados.</p>
+          </div>
+        </section>
 
-        <div id="error-message" class="error-box hidden"></div>
+        <!-- Recommendation -->
+        <section class="card card-recommendation">
+          <h2>Recomendación del modelo</h2>
+          <h3 id="recTitle" class="rec-title">—</h3>
+          <p id="recSummary" class="rec-summary">Aún no hay resumen disponible.</p>
 
-        <main id="results-container" class="hidden">
-            
-            <section class="card">
-                <div class="prediction-highlight">
-                    <div>
-                        <h2>Inferencia Predominante (Top 1)</h2>
-                        <span id="main-class" class="class-name">-</span>
-                    </div>
-                    <div>
-                        <span id="main-prob" class="probability-badge">-</span>
-                    </div>
-                </div>
-            </section>
+          <div class="rec-subsection">
+            <h4>Predicciones de rango de edad</h4>
+            <div id="recPrediction" class="rec-prediction">
+              <p class="placeholder">Sin datos.</p>
+            </div>
+          </div>
 
-            <section class="card">
-                <h3>Distribución Probabilística (Top 5)</h3>
-                <ul id="topk-list" class="topk-list"></ul>
-            </section>
+          <div class="rec-subsection">
+            <h4>Perfil demográfico</h4>
+            <div id="recDemographic" class="rec-demographic">
+              <p class="placeholder">Sin datos.</p>
+            </div>
+          </div>
 
-            <section class="card">
-                <h2 id="rec-title" style="border-bottom: 2px solid var(--border-clean); padding-bottom: 0.5rem;">-</h2>
-                <p id="rec-summary" class="lead-text">-</p>
+          <div class="rec-subsection">
+            <h4>Generalizaciones clave</h4>
+            <div id="recInsights" class="rec-insights">
+              <p class="placeholder">Sin datos.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
 
-                <div class="grid-2 mt-1">
-                    <div class="report-block">
-                        <h4>Rangos de Edad Proyectados</h4>
-                        <p style="font-size: 0.95rem; margin-bottom: 0.25rem;"><strong>Intervalo Primario:</strong> <span id="pred-primary-range">-</span> (<span id="pred-primary-conf">-</span>)</p>
-                        <p style="font-size: 0.95rem;"><strong>Intervalo Secundario:</strong> <span id="pred-secondary-range">-</span> (<span id="pred-secondary-conf">-</span>)</p>
-                    </div>
-                    <div class="report-block">
-                        <h4>Clasificación de Perfil</h4>
-                        <p style="font-size: 0.95rem; margin-bottom: 0.5rem;"><strong>Segmento:</strong> <span id="demo-segment">-</span></p>
-                        <p id="demo-summary" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">-</p>
-                        <p id="demo-note" class="note">-</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card">
-                <h3>Matriz de Tendencias de Comportamiento</h3>
-                <div class="grid-3">
-                    <div>
-                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Educación y Aprendizaje</h4>
-                        <ul id="insight-education"></ul>
-                    </div>
-                    <div>
-                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Carrera y Desarrollo</h4>
-                        <ul id="insight-career"></ul>
-                    </div>
-                    <div>
-                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Tecnología y Medios</h4>
-                        <ul id="insight-tech"></ul>
-                    </div>
-                </div>
-                <div class="grid-2 mt-1" style="border-top: 1px solid var(--border-clean); padding-top: 1.5rem;">
-                    <div>
-                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Intereses de Consumo</h4>
-                        <ul id="insight-consumer"></ul>
-                    </div>
-                    <div>
-                        <h4 style="font-size: 0.95rem; color: var(--text-dark);">Preferencias de Servicio</h4>
-                        <ul id="insight-services"></ul>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card">
-                <h3>Directrices y Recomendaciones de Segmento</h3>
-                <div class="grid-3 mt-1">
-                    <div class="action-block">
-                        <h4>Acciones Prioritarias</h4>
-                        <ul id="rec-priority"></ul>
-                    </div>
-                    <div class="action-block">
-                        <h4>Servicios Sugeridos</h4>
-                        <ul id="rec-services"></ul>
-                    </div>
-                    <div class="action-block">
-                        <h4>Canales de Comunicación</h4>
-                        <ul id="rec-channels"></ul>
-                    </div>
-                </div>
-            </section>
-            
-            <footer id="meta-info" class="meta-info"></footer>
-        </main>
-    </div>
-    <script src="model.js"></script>
+  <script src="model.js"></script>
 </body>
 </html>
