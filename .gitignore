@@ -12,9 +12,11 @@ fairface_reorganizado/
 
 # Carpetas de modelos y resultados
 resultados/
-app/utils/  # imagenes con las que hice pruebas
 app/swin_inferencia_probabilidades.ipynb
 app/swin_inferencia_probabilidades.py
+
+# imagenes con las que hice pruebas
+app/utils/
 
 # PTH del modelo seleccionado
 app/models/
