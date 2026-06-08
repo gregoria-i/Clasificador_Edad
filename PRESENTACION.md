@@ -32,27 +32,15 @@ Antes de entrenar los modelos se realizó un análisis exploratorio de datos con
 
 ### Distribución de edades
 
-Pegar aquí:
-
-```markdown
 ![Distribución de edades](docs/distribucion_edades.png)
-```
 
 ### Distribución de género
 
-Pegar aquí:
-
-```markdown
 ![Distribución de género](docs/distribucion_genero.png)
-```
 
 ### Distribución de raza
 
-Pegar aquí:
-
-```markdown
 ![Distribución de raza](docs/distribucion_raza.png)
-```
 
 El análisis permitió verificar la distribución de las etiquetas disponibles y detectar posibles desbalances entre clases.
 
@@ -118,10 +106,8 @@ Los resultados obtenidos fueron los siguientes:
 | deit_tiny_patch16_224.fb_in1k | 35.4% | 74.5% | 20% |
 | xcit_tiny_12_p16_224.fb_in1k | 34.6% | 72.0% | 20% |
 
-```markdown
 ![Comparación modelos 20%](docs/comparacion_20_congelados.png)
 ![Comparación modelos 20% 2](docs/comparacion_20_descongelados.png)
-```
 
 Estos experimentos permitieron identificar las arquitecturas con mejor desempeño inicial para continuar con pruebas más costosas utilizando una mayor cantidad de datos.
 
@@ -152,13 +138,10 @@ Para monitorear el comportamiento del entrenamiento se analizaron las curvas de 
 
 Para revisar si en alguna se genera overfiting
 *Modelos descongelados*
-```markdown
 ![Loss_frozen](docs/Perdida Modelos descongelados.png)
-```
+
 *Modelos congelados*
-```markdown
 ![loss_unfrozen](docs/Perdida Modelos congelados.png)
-```
 
 Estas gráficas permitieron observar la evolución del aprendizaje del modelo y detectar posibles problemas de sobreajuste o subajuste.
 
@@ -189,10 +172,8 @@ Una vez seleccionado el modelo final, se utilizó Grad-CAM para analizar qué re
 
 El archivo `grad_cam.py` genera mapas de activación sobre distintas etapas de la arquitectura Swin Transformer.
 
-```markdown
 ![GradCAM](docs/Grad_Cam_ultima capa.png)
 ![GradCAM](docs/Grad_Cam_Stages.png)
-```
 
 Estas visualizaciones permiten interpretar parcialmente el comportamiento del modelo y verificar que la atención se concentra principalmente en regiones faciales relevantes para la estimación de edad.
 
@@ -206,15 +187,14 @@ La aplicación permite cargar una fotografía facial y obtener como salida el ra
 
 ### Captura de pantalla
 
-```markdown
 ![Frontend](docs/frontend.png)
-```
 
 ### Video de demostración
 
-[Ver demostración](docs/Prueba del modelo.mp4)
+![Ver demostración](docs/Prueba del modelo.mp4)
 
 Se incluye un video de demostración como evidencia del funcionamiento del sistema. La grabación no cuenta con edición ni formato de presentación, pero permite verificar la integración entre el modelo de clasificación y la API de Gemini.
+
 ---
 
 ## Conclusiones
